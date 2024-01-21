@@ -1,0 +1,43 @@
+version: '3'
+
+services:
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+    - DEBUG=1
+    - SECRET_KEY=django-insecure-y5ch9!2#(b-=)o6+#b!&0tylkiabl#)4v)2a5)#)k-w!45o9w_
+    - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:12
+    environment:
+      POSTGRES_USER: "database_user"
+      POSTGRES_PASSWORD: "1234"
+      POSTGRES_DB: "database_name"
+
+  redis:
+    image: redis:alpine
+  celery:
+    build:
+      context: .
+    command: celery -A EventHub worker -l info
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=1
+      - SECRET_KEY=django-insecure-y5ch9!2#(b-=)o6+#b!&0tylkiabl#)4v)2a5)#)k-w!45o9w_
+      - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]
+    depends_on:
+      - redis
+
+networks:
+  backend:
+    driver: bridge
